@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta http-equiv="X-UA-Compatible" content="ie=edge">
+  <!-- bootstrap link -->
+  <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css"
+    integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+ 
+  
+  <script src="https://code.jquery.com/jquery-3.3.1.js" integrity="sha256-2Kok7MbOyxpgUVvAk/HJ2jigOSYS2auK4Pfzbm7uH60="
+    crossorigin="anonymous"></script>
+  <title>Bus Schedule</title>
+
+</head>
+
+<body>
+    <div class="container">
+            <div class="row">
+                <div class="col-sm">
+                <div class="jumbotron">
+                    <h1 class="display-4">Redmond TC Bus Schedule</h1>
+                    <p class="lead">Redmond: Bicycle Capital of the Northwest, but buses are also available</p>
+                </div>
+                </div>
+            </div>
+
+
+    <div class="row">
+            <div class="col-sm">
+                <div class="card">
+                <h5 class="card-header">Current Bus Schedule</h5>
+                <div class="card-body">
+                    <table class="table">
+                    <thead>
+                        <tr>
+                        <th scope="col">Route #</th>
+                        <th scope="col">Destination</th>
+                        <th scope="col">First Bus</th>
+                        <th scope="col">Frequency (min)</th>
+                        <th scope="col">Next Arrival</th>
+                        <th scope="col">Minutes Away</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                    </tbody>
+
+                    </table>
+                </div>
+                </div>
+            </div>
+            </div>
+        
+            </br>
+        
+            <div class="row">
+            <div class="col-sm">
+                <div class="card">
+                <h5 class="card-header">Add Bus</h5>
+                <div class="card-body">
+                    <form>
+                    <div class="form-group">
+                        <label for="route">Route #</label>
+                        <input type="route" class="form-control" id="route-input" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label for="destination">Destination</label>
+                        <input type="destination" class="form-control" id="destination-input" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label for="first-bus">First Bus Time (HH:mm - military time)</label>
+                        <input type="first-bus" class="form-control" id="firstBus-input" placeholder="">
+                    </div>
+                    <div class="form-group">
+                        <label for="frequency">Frequency (min)</label>
+                        <input type="frequency" class="form-control" id="frequency-input" placeholder="">
+                    </div>
+                    
+                    <button type="submit" class="btn btn-primary" id="add-bus">Submit</button>
+            </form>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  </div>
+        <!--firebase link-->
+        <script src="https://www.gstatic.com/firebasejs/5.9.2/firebase.js"></script>
+        <!-- moment.js link -->
+        <script src="https://cdn.jsdelivr.net/momentjs/2.12.0/moment.min.js"></script>
+        
+        
+        <script>
+        // Initialize Firebase
+        var config = {
+            apiKey: "AIzaSyAZQKBrVvYCCTjfeG0Rgw6XTTOAnxaH_lA",
+            authDomain: "busschedule-389cd.firebaseapp.com",
+            databaseURL: "https://busschedule-389cd.firebaseio.com",
+            projectId: "busschedule-389cd",
+            storageBucket: "",
+            messagingSenderId: "984322984963"
+        };
+        firebase.initializeApp(config);
+
+
+        var database = firebase.database();
+
+        // Initial Values
+        var route = "";
+        var destination = "";
+        var firstBus = "";
+        var frequency = "";
+
+        // Capture Button Click
+        $("#add-bus").on("click", function (event) {
+        event.preventDefault();
+        
+       
+        
+
+        // Grabbed values from text boxes
+        route = $("#route-input").val().trim();
+        destination = $("#destination-input").val().trim();
+        firstBus = $("#firstBus-input").val().trim();
+        frequency = $("#frequency-input").val().trim();
+
+        // Code for handling the push
+        database.ref().push({
+            route: route,
+            destination: destination,
+            firstBus: firstBus,
+            frequency: frequency,
+            dateAdded: firebase.database.ServerValue.TIMESTAMP
+
+        });
+
+        function clearForms()
+        {
+            $(':input').not(':button, :submit, :reset, :hidden, :checkbox, :radio').val('');
+            $(':checkbox, :radio').prop('checked', false);
+        }
+
+        clearForms();
+
+        });
+
+
+        
+         // Firebase watcher .on("child_added"
+        database.ref().on("child_added", function (snapshot) {
+        // storing the snapshot.val() in a variable 
+        var sv = snapshot.val();
+
+        // Console.loging the last user's data
+
+        console.log(sv.route);
+        console.log(sv.destination);
+        console.log(sv.firstBus);
+        console.log(sv.frequency);
+
+
+        //moment.js calculation (local)
+        var firstBusConvert = moment(sv.firstBus, "HH:mm").subtract(1,"years");
+        console.log (firstBusConvert);
+
+        var currentTime = moment();
+        console.log("current time: " + moment(currentTime).format("HH:mm"));
+
+        //time difference in minutes
+        var timeDiff = moment().diff(moment(firstBusConvert),"minutes");
+        console.log("difference in time: " + timeDiff);
+        
+        //remainder of timeDiff/frequency
+        console.log(sv.frequency);
+        
+        var tFrequency = parseInt(sv.frequency);
+        console.log(tFrequency);
+
+        var remainderMin = timeDiff % tFrequency;
+        console.log(remainderMin)
+
+        //minutes away
+        var tMinutesAway = tFrequency - remainderMin;
+        console.log("minutes away: " + tMinutesAway);
+
+        var nextArrival = moment().add(tMinutesAway, "minutes").format("HH:mm");
+        console.log("next arrival: " + nextArrival);
+
+    
+
+
+
+
+        //add elements to table
+
+       
+        var newRow = $("<tr>").append(
+            $("<td>").text(sv.route),
+            $("<td>").text(sv.destination),
+            $("<td>").text(sv.firstBus),
+            $("<td>").text(sv.frequency),
+            $("<td>").text(nextArrival),
+            $("<td>").text(tMinutesAway)
+        );
+
+        $("tbody").append(newRow);
+                
+
+
+
+
+
+
+
+
+
+
+
+
+        // Handle the errors
+        }, function (errorObject) {
+        console.log("Errors handled: " + errorObject.code);
+        });
+    
+
+        
+
+
+
+
+        </script>
+
+
+</body>
+</html>
